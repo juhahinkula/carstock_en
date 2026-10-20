@@ -1,36 +1,76 @@
-import { useEffect, useState } from 'react';
-import type { CarData } from '../types';
+import { useState, useEffect } from 'react';
+import type { CarData } from "../types";
 import { DataGrid } from '@mui/x-data-grid';
-import type { GridColDef } from '@mui/x-data-grid';
+import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { getCars } from '../carapi';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Snackbar from '@mui/material/Snackbar';
+
 function CarList() {
-    const [cars, setCars] = useState<CarData[] | null>();
-    const columns: GridColDef[] = [
-        { field: "brand", width: 200, headerName: "Brands" },
-        { field: "model", width: 200, headerName: "Model" },
-        { field: "color", headerName: "Color" },
-        { field: "fuel", headerName: "Fuel" },
-        { field: "modelYear", headerName: "Model Year" },
-        { field: "price", headerName: "Price: (€)" },
-    ]
-    useEffect(() => {
-        fetch("https://car-rest-service-carshop.2.rahtiapp.fi/cars")
-            .then(response => {
-                if (!response.ok)
-                    throw new Error("Sth went wrong");
-                return response.json();
-            })
-            .then(data => setCars(data._embedded.cars))
-            .catch(err => console.log(err))
-    }, []);
-    return (
+  const [cars, setCars] = useState<CarData[] | null>();
+  const [open, setOpen] = useState(false);
+
+  const columns: GridColDef[] = [
+    { field: 'brand', headerName: 'Brand', flex: 1 },
+    { field: 'model',  headerName: 'Model', flex: 1 },
+    { field: 'color',  headerName: 'Color' },
+    { field: 'fuel',  headerName: 'Fuel' },
+    { field: 'modelYear', headerName: 'Model year' },
+    { field: 'price',  headerName: 'Price (€)' },
+    {
+        field: '_links.self.href',
+        headerName: ' ',
+        renderCell: (params: GridRenderCellParams) =>
+            <IconButton onClick={() => handleDelete(params.row._links.self.href)}>
+                <DeleteIcon color="error" />
+            </IconButton>
+    }
+  ]
+
+  const fetchCars = () => {
+    getCars()
+    .then(data => setCars(data._embedded.cars))
+    .catch(err => console.error(err))
+  }
+
+  useEffect(() => {
+    fetchCars();
+  }, []);
+
+  const handleDelete = (url: string) => {
+    fetch(url, { method: 'DELETE' })
+    .then(response => {
+        if (!response.ok)
+            throw new Error("Something went wrong in deletion.");
+
+        return response.json();
+    })
+    .then(() => {
+        fetchCars();
+        setOpen(true);
+    })
+    .catch(err => console.error(err))
+  }
+
+  return(
+    <>
         <div style={{ width: '90%', height: 500 }}>
-            <DataGrid
+            <DataGrid 
                 rows={cars || []}
                 columns={columns}
-                getRowId={row => row._links.self.href}
+                getRowId={ row => row._links.self.href}
+                autoPageSize
             />
-        </div>
-    );
+        </ div>
+        <Snackbar 
+            open={open}
+            message="Car deleted successfully"
+            autoHideDuration={3000}
+            onClose={() => setOpen(false)}
+        />
+    </>
+  );
 }
+
 export default CarList
- 
