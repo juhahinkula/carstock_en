@@ -8,7 +8,7 @@ import CarList from "./components/CarList";
 function App() {
   return (
     <Container maxWidth="lg">
-      <AppBar position="static">
+      <AppBar position="static" sx={{ mb: 2 }}>
         <Toolbar>
           <Typography variant="h6">Car Stock</Typography>
         </Toolbar>

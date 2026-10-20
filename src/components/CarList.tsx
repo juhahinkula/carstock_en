@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import type { CarData } from "../types";
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getCars } from '../carapi';
+import { getCars, deleteCar } from '../carapi';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Snackbar from '@mui/material/Snackbar';
+import AddCar from './AddCar';
 
 function CarList() {
   const [cars, setCars] = useState<CarData[] | null>();
@@ -39,13 +40,7 @@ function CarList() {
   }, []);
 
   const handleDelete = (url: string) => {
-    fetch(url, { method: 'DELETE' })
-    .then(response => {
-        if (!response.ok)
-            throw new Error("Something went wrong in deletion.");
-
-        return response.json();
-    })
+    deleteCar(url)
     .then(() => {
         fetchCars();
         setOpen(true);
@@ -55,12 +50,14 @@ function CarList() {
 
   return(
     <>
-        <div style={{ width: '90%', height: 500 }}>
+        <AddCar fetchCars={fetchCars} />
+        <div style={{ width: '90%', height: 500, marginTop: 10 }}>
             <DataGrid 
                 rows={cars || []}
                 columns={columns}
                 getRowId={ row => row._links.self.href}
                 autoPageSize
+                disableRowSelectionOnClick
             />
         </ div>
         <Snackbar 
